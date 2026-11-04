@@ -9,12 +9,14 @@ O9101(ProbeKit Single Axis Probing)
 
 (---ProbeKit User Variables---)
 #V10 = 1 'Tool Number for tool height offset
-#V11 = 0.2362 'Probe Diameter
+#V11 = D(V10) 'Probe diameter from the tool table D offset
 #V12 = 20.0 'Probe feedrate
+#V33 = 1 'Probe fault check; set to 0 if this control does not support I(n)
 
 (---Setup---)
 M64 (Switch to Spindle Probe)
 M66 (Turn On Probe)
+M19 (Orient spindle)
 G80 (Cancel fixed cycles)
 G53 (Machine Coordinates)
 G90 (Absolute Mode)
@@ -25,6 +27,24 @@ G17 (XY Plane Selection)
 #R7 = AY
 #R8 = AZ
 #R9 = 0.0
+
+(---TEST Probe Input Before Moving---)
+#IF (V33 = 0) THEN GOTO:PROBEOKAY
+#:CHECKPROBE
+#V32 = 0 'Reset to known state
+#V32 = I(7) 'Probe error input; see README for legacy controls
+#IF (V32 = 0) THEN GOTO:PROBEOKAY
+#PRINT "***********************************"
+#PRINT "PROBE ERROR OR NOT TURNED ON: "
+#PRINT "***********************************"
+#PRINT "Press Enter to Retry Probe or No to Exit - Yes=ENTER, NO=1"
+#INPUT V19
+#IF (V19 = 0) THEN GOTO:CHECKPROBE
+#GOTO:FAULT
+#:PROBEOKAY
+#V32 = 0 'Zero after use
+#V19 = 0
+(---END Probe Input Test---)
 
 (Logical Variables)
 #V2 = R2 'Set Input Fixture Offset
